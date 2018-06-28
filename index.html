@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Donation by Spain from 2000 to 2010</title>
+		<script type="text/javascript" src="http://d3js.org/d3.v3.js"></script>
+		
+		<style type="text/css">
+			
+			body {
+				background-color: #fff;
+				font-family: "adelle-1","adelle-2", constantia, cambria, Georgia, serif;
+				font-size:14px;
+				margin: 18px 0 0 30px;
+			}
+
+			h1 {
+				font-size: 24px;
+				margin: 0;
+				color: #5387bd;
+				font-weight: normal;
+			}
+
+			h2 {
+				font-weight: normal;
+				color: black;
+			}
+			
+			p {
+				color: black;
+			}
+			
+			svg {
+				background-color: white;
+			}
+			
+			#introduction {
+				width: 740px;
+				line-height: 150%;
+			}
+			
+			#div1 {
+				display: inline-block;
+			}
+
+			#div2 {
+				display: inline-block;
+			}
+
+			#footer {
+				clear: both;
+				width: 760px;
+				line-height: 150%;
+				font-size: 12px;
+			}
+			
+			path {
+				stroke: #006400;
+				stroke-width: 2;
+				opacity: 0.2;
+				-moz-transition: all 0.1s;
+				-o-transition: all 0.1s;
+				-webkit-transition: all 0.1s;
+				transition: all 0.1s;
+				cursor: pointer;
+				fill: none;
+			}
+
+			g.linklight path{
+				stroke: #ff0000;
+				opacity: 1;
+			}
+			
+			.axis path,
+			.axis line {
+				fill: none;
+				stroke: #BCBCBC;
+				stroke-width: 1;
+				shape-rendering: crispEdges;
+			}
+			
+			.axis path {
+				opacity: 1;
+			}
+			
+			.line:hover, .pathBase:hover {
+				stroke: red;
+				opacity: 1;
+			}
+			
+			.pathBase {
+				stroke: #888;
+				opacity: 0.2;
+			}
+			
+			.pathLight {
+				stroke: red;
+				opacity: 1;
+			}
+				
+			#hoverlabel {
+				font-family: "ff-nuvo-sc-web-pro-1","ff-nuvo-sc-web-pro-2", sans-serif;
+				fill: #333;
+				font-size: 12px;
+				text-anchor: start;
+			}
+					
+			.axis text {
+				font-family: "ff-nuvo-sc-web-pro-1","ff-nuvo-sc-web-pro-2", sans-serif;
+				font-size: 14px;
+				letter-spacing: 0.5px;
+			}
+			
+			.linelabel {
+				font-family: "ff-nuvo-sc-web-pro-1","ff-nuvo-sc-web-pro-2", sans-serif;
+				fill: #333;
+				font-size: 12px;
+				text-anchor: start;
+				opacity: 0.5;
+			}
+			
+			.labelNation {
+				font-family: "ff-nuvo-sc-web-pro-1","ff-nuvo-sc-web-pro-2", sans-serif;
+				fill: #5387bd;
+				font-size: 12px;
+				text-anchor: start;
+			}
+			
+			.labelState {
+				font-family: "ff-nuvo-sc-web-pro-1","ff-nuvo-sc-web-pro-2", sans-serif;
+				fill: #cfa63e;
+				font-size: 12px;
+				text-anchor: start;
+			}
+		
+			.path.active {
+				stroke: red;
+				opacity: 1;
+			}
+
+/* CSS for bar chart */
+
+			rect:hover {
+				fill: red;
+			}
+
+			.barBase {	
+				fill: #5288BE;
+			}
+			
+			.barLight {
+				fill: red;
+			}					
+			
+			.axisBar text {
+				font-family: "ff-nuvo-sc-web-pro-1","ff-nuvo-sc-web-pro-2", sans-serif;
+				font-size: 11px;
+			}
+
+			.axisBarTitle {
+				font-family: "ff-nuvo-sc-web-pro-1","ff-nuvo-sc-web-pro-2", sans-serif;
+				font-size: 12px;
+			}
+
+			.y.axisBar path,
+			.y.axisBar line {
+				opacity: 0;
+				cursor: auto;
+			}
+
+			.x.axisBar path,
+			.x.axisBar line {
+				opacity: 0.2;
+				cursor: auto;
+			}
+			
+			.barlabel {
+				font-family: "ff-nuvo-sc-web-pro-1","ff-nuvo-sc-web-pro-2", sans-serif;
+				font-size:11px;
+			}
+			
+		</style>
+	</head>
+	
+	<body>
+
+		<h1>Donation by Spain to other countries from 2000 to 2010</h1>
+		<div id="introduction">
+		<p>The graph below shows the total donation by the Spain to other recipient countries between 2000 and 2010.
+In the linechart, you can highlight any line by mousing over it. </p>
+		</div>
+		<div id="div1"></div>
+		<div id="div2"></div>
+	
+		<script type="text/javascript">		
+
+			// dimensions and padding
+			var w = 860;
+			var h = 690;
+			var margin = [ 40, 76, 23, 80 ];  //Top, right, bottom, left
+
+			// date formatting and years
+			var dateFormat = d3.time.format("%Y");
+
+			//Set up scales
+			var xScale = d3.time.scale()
+							.range([ margin[3], w - margin[1] - margin[3] ]);
+			
+			var yScale = d3.scale.linear()
+							.range([ margin[0], h - margin[2] ]);
+
+			//Configure axis generators
+			var xAxis = d3.svg.axis()
+							.scale(xScale)
+							.orient("bottom")
+							.ticks(15)
+							.tickFormat(function(d) {
+								return dateFormat(d);
+							});
+
+			var yAxis = d3.svg.axis()
+							.scale(yScale)
+							.orient("left");
+
+
+			//Set x position for line labels
+			var xLabel = w - margin[1] - margin[3];
+			
+			//Configure line generator
+			var line = d3.svg.line()
+				.x(function(d) {
+					return xScale(dateFormat.parse(d.year));
+				})
+				.y(function(d) {
+					return yScale(+d.amount);
+				});
+
+
+			//Create the empty SVG image
+			var linechart = d3.select("#div1")
+						.append("svg")
+						.attr("width", w)
+						.attr("height", h);
+
+			var dataset; //Global variable
+
+			var activeState; //For linked hovering
+			
+			//Load data
+			d3.csv("aidData.csv", function(data) {
+
+
+				//New array with all the years, for referencing later
+				var years = ["2000", "2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010"];
+
+				//Make dataset an empty array to hold our restructured dataset
+				dataset = [];
+
+				//Loop once for each row in data
+				for (var i = 0; i < data.length; i++) {
+
+					//Create new object with this state's name and empty array
+					dataset[i] = {
+						state: data[i].state,
+						rate: []
+					};
+
+					//Loop through all the years
+					for (var j = 0; j < years.length; j++) {
+
+						// If value is not empty
+						if (data[i][years[j]]) {
+							dataset[i].rate.push({
+								year: years[j],
+								amount: data[i][years[j]]
+							});
+						}
+					}
+				}
+				
+				
+				//Set scale domains
+				xScale.domain([ 
+					d3.min(years, function(d) {
+						return dateFormat.parse(d);
+					}),
+					d3.max(years, function(d) {
+						return dateFormat.parse(d);
+					})
+				]);
+
+				yScale.domain([ 
+					d3.max(dataset, function(d) {
+						return d3.max(d.rate, function(d) {
+							return +d.amount;
+						});
+					}),
+					0
+				]);
+
+
+				//Make a group for each state
+				var groups = linechart.selectAll("g")
+					.data(dataset)
+					.enter()
+					.append("g")
+					.on("mouseover", function(d) {
+					
+						activeState = d.state;
+						
+						//Set position for the state label
+						var xPosition = xLabel + 8;
+						var yPosition = h/2; 
+						
+						linechart.append("text")
+						.attr("id", "hoverLabel")
+						.attr("x", xPosition)
+						.attr("y", yPosition)
+						.attr("text-anchor", "start")
+						.attr("font-family", "ff-nuvo-sc-web-pro-1,ff-nuvo-sc-web-pro-2, sans-serif") 
+						.attr("font-size", "14px")
+						.text( d.state);
+						
+						d3.selectAll("rect")
+						.classed("barLight", function(d) {
+							if (d.state == activeState) return true;
+							else return false;
+							});
+					})
+					
+					.on("mouseout", function() {
+						//Remove the state hover label
+						d3.select("#hoverLabel").remove();
+						
+						d3.selectAll("rect")
+						.attr("class", "barBase");
+						 
+					});
+
+				//Create label for highlighted region
+					linechart.append("text")
+					.attr("x", xLabel + 8)
+					.attr("y", h/2 - 16)
+					.attr("font-family", "ff-nuvo-sc-web-pro-1,ff-nuvo-sc-web-pro-2, sans-serif") 
+					.attr("font-size", "11px")
+					.attr("fill", "brown")				
+					.text("Highlighted Recipient Country");				
+				
+				//Append a title with the state name
+				groups.append("title")
+					.text(function(d) {
+						return d.state;
+					});
+
+				//Within each group, create a new line/path
+				groups.selectAll("path")
+					.data(function(d) {
+						return [ d.rate ];
+					})
+					.enter()
+					.append("path")
+					.attr("class", "line")
+					.attr("d", line);
+
+				//Axes
+				linechart.append("g")
+					.attr("class", "x axis")
+					.attr("transform", "translate(0," + (h - margin[2]) + ")")
+					.call(xAxis);
+				
+				linechart.append("g")
+					.attr("class", "y axis")
+					.attr("transform", "translate(" + (margin[3]) + ",0)")
+					.call(yAxis)
+					.append("text")
+					.attr("x", 0 - margin[3])
+					.attr("y", margin[0] - 10)
+					.style ("text-anchor", "start")
+					.text("Donated amount in USD");
+
+
+			// ------------------  Bar Chart   ---------------------------
+
+			var marginBar = {top: 15, right: 40, bottom: 0, left: 130};
+			var wBar= 250;
+			var	hBar = 670;
+										
+			var barchart = d3.select("#div2")
+						.append("svg")
+						.attr("width", wBar+ marginBar.right + marginBar.left)
+						.attr("height", hBar + marginBar.top + marginBar.bottom);
+			
+			var widthScale = d3.scale.linear()
+				.range( [ 0, wBar ] );
+				
+			var heightScale = d3.scale.ordinal()
+				.rangeRoundBands( [ 0, hBar ], 0.15 );
+
+			//Bar chart axis generator
+			var xAxisBar = d3.svg.axis()
+				.scale(widthScale)
+				.orient("bottom")
+				.ticks(5);
+			
+			var yAxisBar = d3.svg.axis()
+				.scale(heightScale)
+				.orient("left");
+			
+				data.sort(function(a, b) {
+					return d3.descending(+a[2010] || 0, +b[2010] || 0);
+				});
+
+				widthScale.domain( [ 0, d3.max(data, function(d) {
+					return +d[2010] || 0;
+				}) ]);
+				
+				heightScale.domain(data.map(function(d) { return d.state; } ));
+				
+				var rects = barchart.selectAll("rect")
+								.data(data)
+								.enter()
+								.append("rect");
+
+				rects.attr("x", marginBar.left)
+					.attr("y", function(d) {
+						return heightScale(d.state);
+					})
+					.attr("width", function(d) {
+						if (d[2010] === "NA"){
+							return widthScale(0);
+						}
+						else{
+						return widthScale(d[2010]);
+					}
+					})
+					.attr("height", heightScale.rangeBand())
+					.attr("class", "barBase")
+					.append("title")
+					.text(function(d) {
+						return d.state + "'s total recieved donation by Spain in 2010 was " + d[2010] +" USD";
+					});
+					
+				//add data labels	
+				barchart.selectAll("text")
+					.data(data)
+					.enter()
+					.append("text")
+					.text(function(d) {
+						return d[2010];
+					})
+					.attr("x", function(d) {
+						if (d[2010] === "NA"){ return marginBar.left; }
+						else{ return widthScale(d[2010]) + marginBar.left + 3; }
+					})
+					.attr("y", function(d) {
+						return heightScale(d.state) + heightScale.rangeBand() - 3;
+					})
+					.attr("class", "barlabel")
+					.attr("text-anchor", "start")
+					.style("fill", "#000");
+					
+				//rollover functionality
+				barchart.selectAll("rect")
+					
+						.on("mouseover", function(d) {
+					
+						activeState = d.state;
+																								
+						linechart.selectAll("g")
+						.each(function(d) {
+							if(d){
+								if ( d.state == activeState ){
+									d3.select(this).select("path").classed("pathLight", true);
+									
+									var xPosition = xLabel + 8;
+									var yPosition = h/2; 
+
+									linechart.append("text")
+									.attr("id", "hoverLabel")
+									.attr("x", xPosition)
+									.attr("y", yPosition)
+									.attr("text-anchor", "start")
+									.attr("font-family", "ff-nuvo-sc-web-pro-1,ff-nuvo-sc-web-pro-2, sans-serif")
+									.attr("font-size", "14px")
+									.text( activeState); 	
+									
+									return true;
+																	
+								}
+								else{
+									return false;
+							}
+						}
+					})
+					})
+					
+					.on("mouseout", function() {
+						
+						d3.selectAll("path")
+						.attr("class", "pathBase");
+						
+						d3.select("#hoverLabel").remove();
+						 
+				});
+				
+				//add axes
+				barchart.append("g")
+					.attr("class", "x axisBar")
+					.attr("transform", "translate(" + marginBar.left + "," + (hBar - marginBar.top) + ")")
+					.call(xAxisBar)
+					.attr("opacity","0");
+
+				barchart.append("g")
+					.attr("class", "y axisBar")
+					.attr("transform", "translate(" + marginBar.left + " , 0)")
+					.call(yAxisBar)
+					.append("text")
+					.attr("x", 0 )
+					.attr("y", marginBar.top )
+					.style("font-size", "14")
+					.style("text-anchor", "start")
+					.text("2010 donation amount by recipient country");
+
+			});
+
+		</script>
+		<div id= "codeDescription">
+		    <h1>Description:</h1>
+		    <p>The VI8's index.html page contains two linked charts - line chart and bar chart. Both are placed in two different containers viz. "div1" and "div2".</p> 
+	
+		    <p>To do this assignment, I chose the "aid data" of ICW-1. Initially, I refined the data according to the visualization goal.
+		    The vis. goal includes the visualization of donation by Spain to other donation recipient countries.
+		    Because Spain donated from 2000 to 2010, so the year representation on the graph is being represented from 2000 to 2010.
+		     Both charts and linked to each other in 
+		    such a way that when we mouse-over on a bar of the barchart, respective country's line also highlights in the linechart and vice-versa.
+		    On mouse over action, selected bar changes its color from blue to red and selected line from green to red for the clear visualization.
+		    Additionally, a description box also pops up when a user hover on a bar. This description let the user know about the amount recieved by the selected country in 2010.
+		    On the other hand, when a user hover on a line, a box pops up with the country name of selected line under the "Highlighted Recipient Country" heading.</p>
+		    <p>In sum, there are total 32 countries which recieved donation from Spain between 2000 and 2010. Line chart represents the all recipient countries through lines. 
+		    Barchart shows the bars for only countries who recieved donation only in 2010. i.e. other countries with 0 value shows that they did not recieved any donation in year 2010.
+		   </p>
+		</div>
+		<div id="footer"><p>Link of an example which I used for the completion of this assignment <a href="http://bl.ocks.org/threestory/c8b6db6e67482ee12840">U.S. Youth Suicides - lines and bars</a><br />
+		Brushing and linking charts in D3</p>
+		</div>
+	</body>
+</html>
